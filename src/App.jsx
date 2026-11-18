@@ -5,6 +5,7 @@ import { monthKey } from './quota/quota.js'
 import { DEFAULT_VOICE, FREE_TIER_CHARS } from './tts/voices.js'
 import Library from './ui/Library.jsx'
 import ImportReview from './ui/ImportReview.jsx'
+import Player from './ui/Player.jsx'
 import { useConversion } from './ui/useConversion.js'
 
 export default function App() {
@@ -76,6 +77,21 @@ export default function App() {
             setScreen({ name: 'library' })
           }}
           onConfirm={confirmImport}
+        />
+      </main>
+    )
+  }
+
+  if (screen.name === 'player') {
+    return (
+      <main className="app">
+        <Player
+          key={screen.bookId}
+          bookId={screen.bookId}
+          onBack={() => {
+            setScreen({ name: 'library' })
+            refresh()
+          }}
         />
       </main>
     )
