@@ -21,7 +21,7 @@ function statusText(book, progress) {
   }
 }
 
-export default function Library({ books, progress, hasKey, onOpen, onAddFile, onSettings, onRetry, children }) {
+export default function Library({ books, progress, hasKey, onOpen, onAddFile, onSettings, onRetry, onReconvert, children }) {
   return (
     <section className="screen">
       <header className="topbar">
@@ -55,6 +55,11 @@ export default function Library({ books, progress, hasKey, onOpen, onAddFile, on
               {book.status === 'error' && (
                 <button className="btn btn--small" onClick={() => onRetry(book.id)}>
                   Tentar de novo
+                </button>
+              )}
+              {book.status === 'audio-missing' && (
+                <button className="btn btn--small" onClick={() => onReconvert(book.id)}>
+                  Reconverter
                 </button>
               )}
             </li>

@@ -67,3 +67,11 @@ test('empty library shows a hint', () => {
   render(<Library {...props()} />)
   expect(screen.getByText(/Nenhum livro ainda/)).toBeInTheDocument()
 })
+
+test('book without audio shows "Áudio removido" and a "Reconverter" action', async () => {
+  const onReconvert = vi.fn()
+  render(<Library {...props({ onReconvert, books: [book({ status: 'audio-missing' })] })} />)
+  expect(screen.getByText('Áudio removido')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Reconverter' }))
+  expect(onReconvert).toHaveBeenCalledWith('b')
+})

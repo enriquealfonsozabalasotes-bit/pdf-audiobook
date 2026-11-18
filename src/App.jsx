@@ -6,6 +6,8 @@ import { DEFAULT_VOICE, FREE_TIER_CHARS } from './tts/voices.js'
 import Library from './ui/Library.jsx'
 import ImportReview from './ui/ImportReview.jsx'
 import Player from './ui/Player.jsx'
+import Settings from './ui/Settings.jsx'
+import { reconvertBook } from './import/manage.js'
 import { useConversion } from './ui/useConversion.js'
 
 export default function App() {
@@ -82,6 +84,14 @@ export default function App() {
     )
   }
 
+  if (screen.name === 'settings') {
+    return (
+      <main className="app">
+        <Settings onBack={() => setScreen({ name: 'library' })} onChanged={refresh} />
+      </main>
+    )
+  }
+
   if (screen.name === 'player') {
     return (
       <main className="app">
@@ -107,6 +117,10 @@ export default function App() {
         onAddFile={addFile}
         onSettings={() => setScreen({ name: 'settings' })}
         onRetry={retry}
+        onReconvert={async (id) => {
+          await reconvertBook(id, { store })
+          await refresh()
+        }}
       >
         {notice && <p className={`notice notice--${notice.kind}`}>{notice.text}</p>}
       </Library>

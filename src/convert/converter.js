@@ -13,6 +13,8 @@ const MESSAGES = {
   network: 'Sem conexão com a internet. Tente de novo quando estiver online.',
 }
 
+export const errorMessage = (kind) => MESSAGES[kind] || MESSAGES.retryable
+
 export const estimateBookChars = (chapters) => chapters.reduce((n, c) => n + countChars(c.text), 0)
 
 /** Read-modify-write so fields saved by others (e.g. playback position) survive. */

@@ -1,0 +1,25 @@
+// Book lifecycle after import: free space by removing audio, and convert again from stored text.
+import { chunkText } from '../text/chunk.js'
+
+export async function removeAudio(bookId, { store }) {
+  await store.deleteAudio(bookId)
+  const book = await store.getBook(bookId)
+  const { pausedUntil, errorMessage, ...rest } = book
+  await store.saveBook({
+    ...rest,
+    status: 'audio-missing',
+    chapters: book.chapters.map((c) => ({ ...c, status: 'pending' })),
+  })
+}
+
+export async function reconvertBook(bookId, { store }) {
+  const book = await store.getBook(bookId)
+  for (const chapter of book.chapters) {
+    if (chapter.status === 'ready') continue
+    const text = (await store.getChapterText(bookId, chapter.id)) || ''
+    await store.deleteChunks(bookId, chapter.id)
+    await store.saveChunks(chunkText(text).map((t, index) => ({ bookId, chapterId: chapter.id, index, text: t, status: 'pending' })))
+  }
+  const { pausedUntil, errorMessage, ...rest } = await store.getBook(bookId)
+  await store.saveBook({ ...rest, status: 'converting' })
+}
