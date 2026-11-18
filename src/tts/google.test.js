@@ -34,10 +34,10 @@ test.each([
   expect(err).toMatchObject({ kind, status, billable })
 })
 
-test('a rejected fetch is a non-billable network error', async () => {
+test('a rejected fetch is a network error that may have been billed', async () => {
   const fetchImpl = () => Promise.reject(new TypeError('offline'))
   const err = await synthesize({ text: 'x', voiceName: 'v', apiKey: 'K', fetchImpl }).catch((e) => e)
-  expect(err).toMatchObject({ kind: 'network', billable: false })
+  expect(err).toMatchObject({ kind: 'network', billable: true })
 })
 
 test('testKey synthesizes a short phrase with the default voice', async () => {
@@ -52,4 +52,5 @@ test('voices are pt-BR, default is in the list, all share one conservative free 
   expect(VOICES.map((v) => v.name)).toContain(DEFAULT_VOICE)
   expect(new Set(VOICES.map((v) => quotaPoolOf(v.name)))).toEqual(new Set(['free']))
   expect(FREE_TIER_CHARS.free).toBe(1_000_000)
+  expect(VOICES.some((v) => v.name.includes('Chirp'))).toBe(false) // free tier unverified
 })

@@ -5,7 +5,7 @@ import { convertBook } from './converter.js'
 import { TtsError } from '../tts/google.js'
 import { FREE_TIER_CHARS } from '../tts/voices.js'
 
-const NOW = new Date(2026, 10, 18)
+const NOW = new Date(Date.UTC(2026, 10, 18, 15))
 const LIMIT = FREE_TIER_CHARS.free
 
 beforeEach(() => {
@@ -61,7 +61,7 @@ test('resumes a paused book in the next month without re-sending done chunks', a
   await store.addUsage('2026-11', 'free', LIMIT * 0.95 - 8) // room for "primeiro" only
   const log = []
   expect(await convertBook('b', deps({ synthesize: fakeSynth(log) }))).toBe('paused-quota')
-  expect(await convertBook('b', deps({ synthesize: fakeSynth(log), now: () => new Date(2026, 11, 1) }))).toBe('ready')
+  expect(await convertBook('b', deps({ synthesize: fakeSynth(log), now: () => new Date(Date.UTC(2026, 11, 1, 15)) }))).toBe('ready')
   expect(log).toEqual(['primeiro', 'segundo'])
   expect(await store.getUsage('2026-12', 'free')).toBe(7)
   const book = await store.getBook('b')
@@ -150,4 +150,44 @@ test('reports progress in characters', async () => {
   const events = []
   await convertBook('b', deps({ onProgress: (p) => events.push(p) }))
   expect(events.at(-1)).toEqual({ done: 4, total: 4 })
+})
+
+test('a lost response (network error) still counts its chars as used', async () => {
+  await seed({ c1: ['abcd'] })
+  let calls = 0
+  const synthesize = async ({ text }) => {
+    if (++calls === 1) throw new TtsError('network', 'Load failed', { billable: true })
+    return new Blob([text])
+  }
+  await convertBook('b', deps({ synthesize }))
+  expect(await store.getUsage('2026-11', 'free')).toBe(8)
+})
+
+test('chars are counted before the request is sent', async () => {
+  await seed({ c1: ['abcd'] })
+  let seen = null
+  const synthesize = async ({ text }) => {
+    seen = await store.getUsage('2026-11', 'free')
+    return new Blob([text])
+  }
+  await convertBook('b', deps({ synthesize }))
+  expect(seen).toBe(4)
+})
+
+test('definitely-not-billed failures (429) are given back', async () => {
+  await seed({ c1: ['abcd'] })
+  const synthesize = async () => {
+    throw new TtsError('retryable', 'x', { status: 429, billable: false })
+  }
+  await convertBook('b', deps({ synthesize }))
+  expect(await store.getUsage('2026-11', 'free')).toBe(0)
+})
+
+test('a pending chapter with no chunks never overwrites existing audio', async () => {
+  await seed({ c1: ['a'] })
+  await store.deleteChunks('b', 'c1')
+  await store.saveChapterAudio('b', 'c1', new Blob(['bom']))
+  expect(await convertBook('b', deps())).toBe('error')
+  expect(await (await store.getChapterAudio('b', 'c1')).text()).toBe('bom')
+  expect((await store.getBook('b')).errorMessage).toMatch(/Reconverter/)
 })

@@ -9,7 +9,7 @@ export class TtsError extends Error {
     this.name = 'TtsError'
     this.kind = kind // 'auth' | 'bad-request' | 'retryable' | 'network'
     this.status = status
-    this.billable = billable // Google may have processed (and billed) the request
+    this.billable = billable // false only when Google certainly did not bill it
   }
 }
 
@@ -40,7 +40,8 @@ export async function synthesize({ text, voiceName, apiKey, fetchImpl = fetch })
       }),
     })
   } catch (err) {
-    throw new TtsError('network', err?.message || 'Sem conexão')
+    // the request may have reached Google before the connection dropped
+    throw new TtsError('network', err?.message || 'Sem conexão', { billable: true })
   }
   if (!res.ok) {
     const detail = await res.json().then((j) => j?.error?.message).catch(() => undefined)

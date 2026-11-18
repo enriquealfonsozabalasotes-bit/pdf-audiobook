@@ -66,6 +66,12 @@ no CarPlay. Se isso acontecer:
 - Só PDFs com **texto selecionável**. PDFs escaneados (foto da página) não funcionam.
 - A limpeza tira cabeçalhos, rodapés, números de página e notas de rodapé, e lê duas
   colunas na ordem certa. Tabelas e legendas são lidas como texto.
+- O contador da cota grátis também fica só no iPhone. Se os dados do app forem apagados no
+  meio do mês, informe o uso real em **Configurações → Já usado este mês** (o valor está no
+  Google Cloud, em Faturamento → Relatórios). O alerta de orçamento do passo 1.5 é a rede de
+  segurança.
+- O mês da cota vira à meia-noite do horário do Pacífico (EUA), umas 5h da manhã em Brasília,
+  igual ao Google.
 - Se o iPhone apagar os dados do app, os áudios somem. O texto fica guardado enquanto
   existir, e o botão **Reconverter** refaz o áudio. Os MP3 salvos em Arquivos são seu backup.
 - Áudio com a tela bloqueada: _anotar aqui o resultado do teste no seu iPhone._

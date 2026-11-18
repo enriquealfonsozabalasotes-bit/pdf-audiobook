@@ -24,10 +24,9 @@ export function usePlayer(bookId, { store = defaultStore, audio = getSharedAudio
 
   const savePosition = useCallback(
     async (timeSec = audio.currentTime) => {
-      if (!chapterRef.current) return
-      const b = await store.getBook(bookId)
-      if (!b) return
-      await store.saveBook({ ...b, position: { chapterId: chapterRef.current, timeSec } })
+      const chapterId = chapterRef.current
+      if (!chapterId) return
+      await store.updateBook(bookId, (b) => ({ ...b, position: { chapterId, timeSec } }))
     },
     [audio, bookId, store],
   )
@@ -113,8 +112,7 @@ export function usePlayer(bookId, { store = defaultStore, audio = getSharedAudio
       setSpeedState(rate)
       audio.defaultPlaybackRate = rate
       audio.playbackRate = rate
-      const b = await store.getBook(bookId)
-      if (b) await store.saveBook({ ...b, speed: rate })
+      await store.updateBook(bookId, (b) => ({ ...b, speed: rate }))
     },
     [audio, bookId, store],
   )

@@ -1,4 +1,4 @@
-import { chunkText, countChars, MAX_CHUNK_BYTES } from './chunk.js'
+import { chunkText, countChars, MAX_CHUNK_BYTES, MAX_SENTENCE_CHARS } from './chunk.js'
 
 const bytes = (s) => new TextEncoder().encode(s).length
 
@@ -22,7 +22,7 @@ test('a single sentence longer than the limit is split at word boundaries', () =
   expect(chunks.length).toBeGreaterThan(1)
   for (const c of chunks) {
     expect(bytes(c)).toBeLessThanOrEqual(5000)
-    expect(c.split(' ').every((w) => w === 'palavra')).toBe(true)
+    expect(c.split(' ').every((w) => w.replace(/[,.]$/, '') === 'palavra')).toBe(true)
   }
 })
 
@@ -47,4 +47,11 @@ test('empty text gives no chunks', () => {
 
 test('countChars counts code points', () => {
   expect(countChars('ação😀')).toBe(5)
+})
+
+test('sentences longer than MAX_SENTENCE_CHARS are cut into short spoken pieces', () => {
+  const text = 'palavra '.repeat(200).trim() + '.' // 1,600 chars, one "sentence"
+  const pieces = chunkText(text).join(' ').split(/(?<=[.,])\s/)
+  expect(MAX_SENTENCE_CHARS).toBe(400)
+  for (const p of pieces) expect(p.length).toBeLessThanOrEqual(MAX_SENTENCE_CHARS)
 })

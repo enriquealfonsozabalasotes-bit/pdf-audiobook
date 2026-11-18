@@ -42,6 +42,35 @@ export async function requestPersistence() {
 
 // books
 export const saveBook = async (book) => (await openDb()).put('books', book)
+
+/** Read-modify-write in ONE transaction, so concurrent writers never lose each other's fields. */
+export async function updateBook(id, change) {
+  const tx = (await openDb()).transaction('books', 'readwrite')
+  const book = await tx.store.get(id)
+  if (!book) {
+    await tx.done
+    return undefined
+  }
+  const next = change(book)
+  await tx.store.put(next)
+  await tx.done
+  return next
+}
+
+/** Store a chapter's assembled audio, drop its chunks and mark it ready, atomically. */
+export async function finishChapter(bookId, chapterId, mp3) {
+  const tx = (await openDb()).transaction(['books', 'chunks', 'chapterAudio'], 'readwrite')
+  await tx.objectStore('chapterAudio').put({ bookId, chapterId, mp3 })
+  let cursor = await tx.objectStore('chunks').index('byChapter').openCursor([bookId, chapterId])
+  while (cursor) {
+    await cursor.delete()
+    cursor = await cursor.continue()
+  }
+  const books = tx.objectStore('books')
+  const book = await books.get(bookId)
+  if (book) await books.put({ ...book, chapters: book.chapters.map((c) => (c.id === chapterId ? { ...c, status: 'ready' } : c)) })
+  await tx.done
+}
 export const getBook = async (id) => (await openDb()).get('books', id)
 export const listBooks = async () => (await (await openDb()).getAll('books')).sort((a, b) => b.createdAt - a.createdAt)
 
@@ -124,6 +153,8 @@ export async function addUsage(month, tier, chars) {
   await tx.done
   return charsSent
 }
+
+export const setUsage = async (month, tier, charsSent) => (await openDb()).put('usage', { month, tier, charsSent })
 
 // settings
 export const getSettings = async () => ({ ...SETTINGS_DEFAULTS, ...((await (await openDb()).get('settings', 'settings')) || {}) })

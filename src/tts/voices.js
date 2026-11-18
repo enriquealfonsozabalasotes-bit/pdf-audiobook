@@ -6,6 +6,7 @@
 // The owner's rule is "never pay", so every voice counts against ONE pool with the smallest
 // published allowance: 1,000,000 characters per calendar month.
 // https://cloud.google.com/text-to-speech/pricing (checked 2026-11-18)
+// Chirp 3 HD voices are left out: their free allowance could not be confirmed.
 
 export const VOICES = [
   { name: 'pt-BR-Neural2-A', label: 'Neural — feminina A', gender: 'F', tier: 'neural2' },
@@ -13,8 +14,6 @@ export const VOICES = [
   { name: 'pt-BR-Neural2-B', label: 'Neural — masculina B', gender: 'M', tier: 'neural2' },
   { name: 'pt-BR-Wavenet-A', label: 'WaveNet — feminina A', gender: 'F', tier: 'wavenet' },
   { name: 'pt-BR-Wavenet-B', label: 'WaveNet — masculina B', gender: 'M', tier: 'wavenet' },
-  { name: 'pt-BR-Chirp3-HD-Kore', label: 'Chirp HD — feminina (Kore)', gender: 'F', tier: 'chirp3-hd' },
-  { name: 'pt-BR-Chirp3-HD-Charon', label: 'Chirp HD — masculina (Charon)', gender: 'M', tier: 'chirp3-hd' },
   { name: 'pt-BR-Standard-A', label: 'Padrão — feminina A', gender: 'F', tier: 'standard' },
   { name: 'pt-BR-Standard-B', label: 'Padrão — masculina B', gender: 'M', tier: 'standard' },
 ]

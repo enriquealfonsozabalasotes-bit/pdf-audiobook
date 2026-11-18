@@ -95,3 +95,27 @@ test('bookStorageBytes sums chunk and chapter audio sizes', async () => {
 test('requestPersistence returns false when unsupported', async () => {
   expect(await db.requestPersistence()).toBe(false)
 })
+
+test('updateBook applies concurrent changes atomically', async () => {
+  await db.saveBook(book('a', 1))
+  await Promise.all([
+    db.updateBook('a', (b) => ({ ...b, position: { chapterId: 'c1', timeSec: 42 } })),
+    db.updateBook('a', (b) => ({ ...b, status: 'ready' })),
+  ])
+  expect(await db.getBook('a')).toMatchObject({ status: 'ready', position: { timeSec: 42 } })
+})
+
+test('finishChapter saves audio, removes chunks and marks the chapter ready together', async () => {
+  await db.saveBook(book('a', 1))
+  await db.saveChunks([{ bookId: 'a', chapterId: 'c1', index: 0, text: 't', status: 'done', mp3: mp3('x') }])
+  await db.finishChapter('a', 'c1', mp3('audio'))
+  expect(await (await db.getChapterAudio('a', 'c1')).text()).toBe('audio')
+  expect(await db.getChunks('a', 'c1')).toEqual([])
+  expect((await db.getBook('a')).chapters[0].status).toBe('ready')
+})
+
+test('setUsage overwrites the month counter', async () => {
+  await db.addUsage('2026-11', 'free', 10)
+  await db.setUsage('2026-11', 'free', 500)
+  expect(await db.getUsage('2026-11', 'free')).toBe(500)
+})

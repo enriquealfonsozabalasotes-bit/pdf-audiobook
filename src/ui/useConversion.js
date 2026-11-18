@@ -48,8 +48,7 @@ export function useConversion({ books, apiKey, refresh }) {
       onProgress: (p) => setProgress((prev) => ({ ...prev, [next.id]: p })),
     })
       .catch(async (err) => {
-        const book = await store.getBook(next.id)
-        if (book) await store.saveBook({ ...book, status: 'error', errorMessage: `Erro inesperado: ${err?.message || err}` })
+        await store.updateBook(next.id, (b) => ({ ...b, status: 'error', errorMessage: `Erro inesperado: ${err?.message || err}` }))
       })
       .finally(async () => {
         wakeLock?.release().catch(() => {})

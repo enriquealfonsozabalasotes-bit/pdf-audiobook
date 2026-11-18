@@ -6,7 +6,7 @@ import Settings from './Settings.jsx'
 import { TtsError } from '../tts/google.js'
 import { FREE_TIER_CHARS } from '../tts/voices.js'
 
-const NOW = new Date(2026, 10, 18)
+const NOW = new Date(Date.UTC(2026, 10, 18, 15))
 
 beforeEach(() => {
   store.closeDb()
@@ -97,4 +97,23 @@ test('storage list allows deleting audio or the whole book', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Excluir Livro' }))
   await waitFor(async () => expect(await store.getBook('b')).toBeUndefined())
   expect(props.onChanged).toHaveBeenCalled()
+})
+
+test('the month usage can be corrected by hand after data loss', async () => {
+  const props = renderSettings()
+  const input = await screen.findByLabelText('Já usado este mês (caracteres)')
+  await userEvent.clear(input)
+  await userEvent.type(input, '400000')
+  await userEvent.click(screen.getByRole('button', { name: 'Corrigir uso' }))
+  await waitFor(async () => expect(await store.getUsage('2026-11', 'free')).toBe(400_000))
+  expect(await screen.findByText('400.000 de 1.000.000 caracteres grátis')).toBeInTheDocument()
+  expect(props.onChanged).toHaveBeenCalled()
+})
+
+test('audio of a book being converted cannot be deleted', async () => {
+  const chapters = [{ id: 'c1', title: 'C', textLength: 1, status: 'pending' }]
+  await store.saveBook({ id: 'b', title: 'Livro', createdAt: 1, voiceName: 'v', status: 'converting', chapters, position: { chapterId: 'c1', timeSec: 0 }, speed: 1 })
+  renderSettings()
+  expect(await screen.findByRole('button', { name: 'Apagar áudio de Livro' })).toBeDisabled()
+  expect(screen.getByRole('button', { name: 'Excluir Livro' })).toBeDisabled()
 })

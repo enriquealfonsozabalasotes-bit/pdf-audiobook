@@ -3,13 +3,11 @@ import { chunkText } from '../text/chunk.js'
 
 export async function removeAudio(bookId, { store }) {
   await store.deleteAudio(bookId)
-  const book = await store.getBook(bookId)
-  const { pausedUntil, errorMessage, ...rest } = book
-  await store.saveBook({
+  await store.updateBook(bookId, ({ pausedUntil, errorMessage, ...rest }) => ({
     ...rest,
     status: 'audio-missing',
-    chapters: book.chapters.map((c) => ({ ...c, status: 'pending' })),
-  })
+    chapters: rest.chapters.map((c) => ({ ...c, status: 'pending' })),
+  }))
 }
 
 export async function reconvertBook(bookId, { store }) {
@@ -20,6 +18,5 @@ export async function reconvertBook(bookId, { store }) {
     await store.deleteChunks(bookId, chapter.id)
     await store.saveChunks(chunkText(text).map((t, index) => ({ bookId, chapterId: chapter.id, index, text: t, status: 'pending' })))
   }
-  const { pausedUntil, errorMessage, ...rest } = await store.getBook(bookId)
-  await store.saveBook({ ...rest, status: 'converting' })
+  await store.updateBook(bookId, ({ pausedUntil, errorMessage, ...rest }) => ({ ...rest, status: 'converting' }))
 }

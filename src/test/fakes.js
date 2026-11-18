@@ -11,6 +11,10 @@ export function makeStore(book, audioByChapter = {}) {
       current = clone(b)
     },
     getChapterAudio: async (_bookId, chapterId) => audioByChapter[chapterId],
+    updateBook: async (_id, change) => {
+      current = clone(change(clone(current)))
+      return clone(current)
+    },
     get book() {
       return current
     },

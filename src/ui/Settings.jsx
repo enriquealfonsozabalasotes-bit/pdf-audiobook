@@ -34,6 +34,7 @@ export default function Settings({
   const [keyStatus, setKeyStatus] = useState(null)
   const [previewStatus, setPreviewStatus] = useState(null)
   const [books, setBooks] = useState([])
+  const [usageInput, setUsageInput] = useState('')
 
   const pool = quotaPoolOf(settings?.voiceName)
   const limit = FREE_TIER_CHARS[pool]
@@ -173,8 +174,32 @@ export default function Settings({
         {formatNumber(usage)} de {formatNumber(limit)} caracteres grátis
       </p>
       <p className="hint">O app pausa a conversão antes de passar de 95% da cota grátis.</p>
+      <p className="hint">
+        Se o iPhone apagou os dados do app neste mês, o contador zerou. Informe quanto já foi usado (veja no Google
+        Cloud em Faturamento → Relatórios).
+      </p>
+      <label className="field">
+        <span>Já usado este mês (caracteres)</span>
+        <input inputMode="numeric" value={usageInput} onChange={(e) => setUsageInput(e.target.value.replace(/\D/g, ''))} />
+      </label>
+      <button
+        className="btn"
+        disabled={!usageInput}
+        onClick={async () => {
+          const value = Number(usageInput)
+          await store.setUsage(monthKey(now()), pool, value)
+          setUsage(value)
+          setUsageInput('')
+          onChanged()
+        }}
+      >
+        Corrigir uso
+      </button>
 
       <h2>Armazenamento</h2>
+      {books.some((b) => b.status === 'converting') && (
+        <p className="hint">Livros em conversão não podem ser apagados até a conversão terminar ou pausar.</p>
+      )}
       {books.length === 0 ? (
         <p className="hint">Nenhum livro salvo.</p>
       ) : (
@@ -185,10 +210,20 @@ export default function Settings({
                 {b.title} <small>{formatMB(b.bytes)}</small>
               </span>
               <span className="row">
-                <button className="btn btn--small" aria-label={`Apagar áudio de ${b.title}`} onClick={() => deleteAudio(b)}>
+                <button
+                  className="btn btn--small"
+                  aria-label={`Apagar áudio de ${b.title}`}
+                  disabled={b.status === 'converting'}
+                  onClick={() => deleteAudio(b)}
+                >
                   Apagar áudio
                 </button>
-                <button className="btn btn--small btn--danger" aria-label={`Excluir ${b.title}`} onClick={() => deleteBook(b)}>
+                <button
+                  className="btn btn--small btn--danger"
+                  aria-label={`Excluir ${b.title}`}
+                  disabled={b.status === 'converting'}
+                  onClick={() => deleteBook(b)}
+                >
                   Excluir
                 </button>
               </span>

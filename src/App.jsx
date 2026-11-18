@@ -59,9 +59,7 @@ export default function App() {
   }
 
   const retry = async (id) => {
-    const book = await store.getBook(id)
-    const { errorMessage, ...rest } = book
-    await store.saveBook({ ...rest, status: 'converting' })
+    await store.updateBook(id, ({ errorMessage, ...rest }) => ({ ...rest, status: 'converting' }))
     await refresh()
   }
 
