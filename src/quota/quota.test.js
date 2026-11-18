@@ -1,4 +1,4 @@
-import { canSend, monthKey, nextMonthStart, SAFETY } from './quota.js'
+import { canSend, dayKey, monthKey, nextMonthStart, SAFETY } from './quota.js'
 
 test('canSend respects the 5% safety margin', () => {
   expect(SAFETY).toBe(0.95)
@@ -12,4 +12,8 @@ test('monthKey and nextMonthStart use local time', () => {
   expect(nextMonthStart(new Date(2026, 11, 31, 23, 59))).toBe('2027-01-01')
   expect(monthKey(new Date(2026, 0, 5))).toBe('2026-01')
   expect(nextMonthStart(new Date(2026, 10, 18))).toBe('2026-12-01')
+})
+
+test('dayKey formats the local date', () => {
+  expect(dayKey(new Date(2026, 11, 1, 0, 30))).toBe('2026-12-01')
 })
